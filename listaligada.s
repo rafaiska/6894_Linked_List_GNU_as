@@ -242,6 +242,51 @@ inserir:
 
 insereemordem:
 	#TODO: implementar insercao em ordem aqui
+	pushl %edi #guarda ponteiro do novo elemento
+	movl %eax, ptprox
+	movl $NULL, %edi
+	movl %edi, ptant
+
+insereemordem_l1:
+	movl ptprox, %edi
+	cmpl $NULL, %edi
+	jz insereemordem_end
+
+compara_prox:
+	pushl %edi
+	call comparastring
+	addl $4, %esp
+
+	#se for 2, novo elemento eh menor que o em ptprox: pode
+	#continuar a caminhar na lista. Caso contrario, esse eh o
+	#ponto de insercao 
+	cmpl $2, %edi 
+	jnz insereemordem_end
+	
+	movl ptprox, %edi
+	movl %edi, ptant
+	movl 88(%edi), %eax
+	movl %eax, ptprox
+	jmp insereemordem_l1
+
+insereemordem_end:
+	movl ptant, %edi
+	cmpl $NULL, %edi
+	jz insere_no_inicio
+
+	movl %edi, %eax
+	addl $88, %eax
+	popl %edi #recupera ponteiro do novo elemento
+	movl %edi, (%eax)
+	movl ptprox, %eax
+	movl %eax, 88(%edi)
+	jmp endinserte
+
+insere_no_inicio:
+	movl ptpilha, %eax
+	popl %edi #recupera ponteiro do novo elemento
+	movl %edi, ptpilha
+	movl %eax, 88(%edi)
 
 endinserte:
 	pushl $msginser
@@ -299,7 +344,6 @@ buscar:
 
 #Mostra todos os registros da lista
 mostratudo:
-	#TODO: implementar mostra tudo
 	movl ptpilha, %edi
 	cmpl $NULL, %edi
 	jz listavazia

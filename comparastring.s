@@ -9,4 +9,5 @@
 
 .text
 comparastring:
-	
+	movl $2, %edi
+	ret	
