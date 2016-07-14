@@ -1,35 +1,38 @@
 .section .data
 
-titgeral: .asciz "\n*** APLICACAO DE FILA ***\n\n"
-titemp: .asciz "\nENFILEIRAMENTO:\n"
-titdesemp: .asciz "\nDESENFILEIRAMENTO:\n"
-titmostra: .asciz "\nELEMENTOS DA FILA:\n"
+titgeral: .asciz "\n*** LISTA LIGADA DE REGISTROS ***\n\n"
+titins: .asciz "\nINSERCAO:\n"
+titrem: .asciz "\nREMOCAO:\n"
+titcon: .asciz "\nBUSCA POR REGISTRO %s:\n"
+titmos: .asciz "\nMOSTRANDO TODOS OS REGISTROS:\n"
 titreg: .asciz "\Registro no %d:"
 
-menu: .asciz "\nESCOLHA A OPCAO:\n1 - EFILEIRAR\n2 - DESENFILEIRAR\n3 - MOSTRA\n4 - FIM\n> "
+menu: .asciz "\nESCOLHA A OPCAO:\n1 - INSERIR REGISTRO\n2 - REMOVER REGISTRO\n3 - BUSCAR REGISTRO\n4 - LISTAR TODOS\n5 - SAIR\n> "
 
 msgerro: .asciz "\nOPCAO INCORRETA!\n"
-msgvazia: .asciz "\nPILHA VAZIA!\n"
-msgremov: .asciz "\nREGISTRO DESENFILEIRADO!\n"
-msginser: .asciz "\nREGISTRO ENFILEIRADO!\n"
+msgvazia: .asciz "\nLISTA VAZIA!\n"
+msgremov: .asciz "\nREGISTRO REMOVIDO!\n"
+msginser: .asciz "\nREGISTRO INSERIDO!\n"
 pedenome: .asciz "\nDigite o nome: "
-pedera: .asciz "Digite o RA: "
+pededia: .asciz "Digite o dia de nascimento: "
+pedemes: .asciz "Digite o mes de nascimento: "
+pedeano: .asciz "Digite o ano de nascimento: "
 pedesexo: .asciz "Qual o sexo, <F>eminino ou <M>asculino?: "
-pedecurso: .asciz "Digite o nome do curso: "
-pederua: .asciz "Digite o nome da rua: "
-pedenumero: .asciz "Digite o numero da casa: "
-pedebairro: .asciz "Digite o nome do bairro: "
+pedeprofissao: .asciz "Digite a profissao: "
+pedesalario: .asciz "Digite o salario: "
 
 mostranome: .asciz "\nNome: %s"
-mostrara: .asciz "\nRA: %d"
+mostranasc: .asciz "\nData de Nasc.: %2d/%2d/%2d"
 mostrasexo: .asciz "\nSexo: %c"
-mostracurso: .asciz "\nCurso: %s\n"
+mostraprof: .asciz "\nProfissao: %s"
+mostrasala: .asciz "\nSalario: %d\n"
 
 mostrapt: .asciz "\nptreg = %d\n"
 
 formastr: .asciz "%s"
 formach: .asciz "%c"
 formanum: .asciz "%d"
+formaflt: .asciz "%d"
 
 pulalinha: .asciz "\n"
 
@@ -38,17 +41,19 @@ NULL: .int 0
 opcao: .int 0
 
 nome: .space 44
-ra: .space 8
+dian: .int 0
+mesn: .int 0
+anon: .int 0
 sexo: .space 4
-curso: .space 24
-rua: .space 25
-numero: .int 0
-bairro: .space 15
+profissao: .space 24
+salario: .float 0
 prox: .int NULL
 
-naloc: .int 128
+naloc: .int 92
 ptpilha: .int NULL
 ptreg: .int NULL
+ptprox: .int NULL
+ptant: .int NULL
 
 .section .text
 .globl _start
@@ -64,11 +69,10 @@ le_dados:
 	call gets
 
 	popl %edi
-
 	addl $44, %edi
 	pushl %edi
 
-	pushl $pedera
+	pushl $pededia
 	call printf
 	addl $4, %esp
 	pushl $formanum
@@ -76,9 +80,32 @@ le_dados:
 	addl $4, %esp
 
 	popl %edi
-	addl $8, %edi
+	addl $4, %edi
 	pushl %edi
 
+	pushl $pedemes
+	call printf
+	addl $4, %esp
+	pushl $formanum
+	call scanf
+	addl $4, %esp
+
+	popl %edi
+	addl $4, %edi
+	pushl %edi
+
+	pushl $pedeano
+	call printf
+	addl $4, %esp
+	pushl $formanum
+	call scanf
+	addl $4, %esp
+
+	popl %edi
+	addl $4, %edi
+	pushl %edi
+
+	#limpando buffer
 	pushl $formach
 	call scanf
 	addl $4, %esp
@@ -94,22 +121,38 @@ le_dados:
 	addl $4, %edi
 	pushl %edi
 
+	#limpando buffer
 	pushl $formach
 	call scanf
 	addl $4, %esp
 
-	pushl $pedecurso
+	pushl $pedeprofissao
 	call printf
 	addl $4, %esp
-	#pushl $formastr
 	call gets
-	#addl $4, %esp
 
 	popl %edi
 	addl $24, %edi
-	movl $NULL, (%edi)
+	pushl %edi
 
-	subl $80, %edi
+	pushl $pedesalario
+	call printf
+	addl $4, %esp
+	pushl $formaflt
+	call scanf
+	addl $4, %esp
+
+	popl %edi
+	addl $4, %edi
+
+	#limpando buffer
+	pushl $sexo
+	pushl $formach
+	call scanf
+	addl $8, %esp
+
+	movl $NULL, (%edi)
+	subl $88, %edi
 
 	RET
 
@@ -124,13 +167,23 @@ mostra_dados:
 	addl $44, %edi
 	pushl %edi
 
+	#push dia
 	pushl (%edi)
-	pushl $mostrara
+	addl $4, %edi
+
+	#push mes
+	pushl (%edi)
+	addl $4, %edi
+
+	#push ano
+	pushl (%edi)
+	
+	pushl $mostranasc
 	call printf
-	addl $8, %esp
+	addl $16, %esp
 
 	popl %edi
-	addl $8, %edi
+	addl $12, %edi
 	pushl %edi
 
 	pushl (%edi)
@@ -142,18 +195,27 @@ mostra_dados:
 	addl $4, %edi
 	pushl %edi
 
-	pushl $mostracurso
+	pushl $mostraprof
 	call printf
 	addl $4, %esp
 
 	popl %edi
+	addl $24, %edi
+	pushl %edi
 
-	subl $56, %edi
+	pushl (%edi)
+	pushl $mostrasala
+	call printf
+	addl $8, %esp
+
+	#foram percorridos 84 bytes (92 - 4 do salario - 4 do ponteiro)
+	popl %edi
+	subl $84, %edi
 
 	RET
 
-empilha:
-	pushl $titemp
+inserir:
+	pushl $titins
 	call printf
 
 	movl naloc, %ecx
@@ -172,31 +234,29 @@ empilha:
 
 	movl ptpilha, %eax
 	cmpl $NULL, %eax
-	jnz gotolast
+	jnz insereemordem
 
+	#a lista esta vazia, inserir primeiro
 	movl %edi, ptpilha
-	movl $NULL, 80(%edi)
 	jmp endinserte
 
-gotolast:
-	movl %eax, %ebx
-	movl 80(%ebx), %eax
-	cmpl $NULL, %eax
-	jnz gotolast
-
-	movl %edi, 80(%ebx)
-	movl %eax, 80(%edi)
+insereemordem:
+	#TODO: implementar insercao em ordem aqui
 
 endinserte:
 	pushl $msginser
-
 	call printf
 	addl $4, %esp
 
 	jmp menuop
 
-desempilha:
-	pushl $titdesemp
+#FUNCAO REMOVER
+#remove um registro de nome especifico da lista
+#o ponteiro para a string contendo o nome do removido deve ser
+#passado pelo registrador %edi
+remover:
+	#TODO: implementar remocao
+	pushl $titrem
 	call printf
 	addl $4, %esp
 
@@ -225,47 +285,36 @@ continua:
 
 	jmp menuop
 
-mostrapilha:
-	pushl $titmostra
-	call printf
+#FUNCAO PARA BUSCAR UM REGISTRO
+#retorna o ponteiro para o registro procurado em %edi
+#e o ponteiro do registro anterior a ele em %esi
+#(caso o registro em %edi seja o primeiro, %esi sera NULL) 
+buscarreg:
+	#TODO: implementar busca
 
+#Essa funcao eh chamada pelo menu. Ela invoca buscarreg para
+#encontrar um registro e o mostra na tela, caso encontrar
+buscar:
+	#TODO: implementar interface de busca
+
+#Mostra todos os registros da lista
+mostratudo:
+	#TODO: implementar mostra tudo
 	movl ptpilha, %edi
 	cmpl $NULL, %edi
-	jnz continua2
+	jz listavazia
 
+mostraelemento:
+	call mostra_dados
+	movl 88(%edi), %edi
+	cmpl $NULL, %edi
+	jnz mostraelemento
+	jmp menuop
+	
+listavazia:
 	pushl $msgvazia
 	call printf
-	addl $4, %esp
-
-	jmp menuop
-
-continua2:
-	movl ptpilha, %edi
-	movl $1, %ecx
-
-volta:
-	cmpl $NULL, %edi
-	#cmpl $3, %ecx
-	jz menuop
-
-	pushl %edi
-
-	pushl %ecx
-	pushl $titreg
-	call printf
-	addl $4, %esp
-
-	movl 4(%esp), %edi
-	call mostra_dados
-
-	popl %ecx
-	incl %ecx
-	popl %edi
-	movl 80(%edi), %edi
-
-	jmp volta
-
-	jmp menuop
+	jmp menuop	
 
 menuop:
 	pushl $menu
@@ -277,17 +326,20 @@ menuop:
 
 	addl $12, %esp
 
+	#para limpar o buffer:
 	pushl $formach
 	call scanf
 	addl $4, %esp
 
 	cmpl $1, opcao
-	jz empilha
+	jz inserir
 	cmpl $2, opcao
-	jz desempilha
+	jz remover
 	cmpl $3, opcao
-	jz mostrapilha
+	jz buscar
 	cmpl $4, opcao
+	jz mostratudo
+	cmpl $5, opcao
 	jz fim
 
 	pushl $msgerro
