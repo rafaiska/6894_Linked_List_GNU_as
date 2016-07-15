@@ -75,9 +75,7 @@ le_dados:
 	addl $44, %edi
 	pushl %edi
 
-	#TODO: inverter ordem de leitura da data, para que
-	#na ordem certa para o printf
-	pushl $pededia
+	pushl $pedeano
 	call printf
 	addl $4, %esp
 	pushl $formanum
@@ -99,7 +97,7 @@ le_dados:
 	addl $4, %edi
 	pushl %edi
 
-	pushl $pedeano
+	pushl $pededia
 	call printf
 	addl $4, %esp
 	pushl $formanum
