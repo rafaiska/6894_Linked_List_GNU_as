@@ -3,7 +3,7 @@
 titgeral: .asciz "\n*** LISTA LIGADA DE REGISTROS ***\n\n"
 titins: .asciz "\nINSERCAO:\n"
 titrem: .asciz "\nREMOCAO:\n"
-titcon: .asciz "\nBUSCA POR REGISTRO %s:\n"
+titcon: .asciz "\nBUSCA POR REGISTRO\n"
 titmos: .asciz "\nMOSTRANDO TODOS OS REGISTROS:\n"
 titreg: .asciz "\Registro no %d:"
 
@@ -13,6 +13,8 @@ msgerro: .asciz "\nOPCAO INCORRETA!\n"
 msgvazia: .asciz "\nLISTA VAZIA!\n"
 msgremov: .asciz "\nREGISTRO REMOVIDO!\n"
 msginser: .asciz "\nREGISTRO INSERIDO!\n"
+msgnencontrado: .asciz "\nREGISTRO NAO ENCONTRADO\n"
+msgencontrado: .asciz "\nREGISTRO ENCONTRADO:\n"
 pedenome: .asciz "\nDigite o nome: "
 pededia: .asciz "Digite o dia de nascimento: "
 pedemes: .asciz "Digite o mes de nascimento: "
@@ -54,6 +56,7 @@ ptpilha: .int NULL
 ptreg: .int NULL
 ptprox: .int NULL
 ptant: .int NULL
+endret: .int NULL
 
 .section .text
 .globl _start
@@ -242,51 +245,41 @@ inserir:
 
 insereemordem:
 	#TODO: implementar insercao em ordem aqui
-	pushl %edi #guarda ponteiro do novo elemento
 	movl %eax, ptprox
-	movl $NULL, %edi
-	movl %edi, ptant
-
-insereemordem_l1:
-	movl ptprox, %edi
-	cmpl $NULL, %edi
-	jz insereemordem_end
-
-compara_prox:
-	pushl %edi
+	pushl ptreg
+	pushl ptprox
 	call comparastring
-	addl $4, %esp
-
-	#se for 2, novo elemento eh menor que o em ptprox: pode
-	#continuar a caminhar na lista. Caso contrario, esse eh o
-	#ponto de insercao 
+	addl $8, %esp
 	cmpl $2, %edi 
-	jnz insereemordem_end
-	
-	movl ptprox, %edi
-	movl %edi, ptant
-	movl 88(%edi), %eax
-	movl %eax, ptprox
-	jmp insereemordem_l1
+	jz insereemordem_l1
 
-insereemordem_end:
-	movl ptant, %edi
-	cmpl $NULL, %edi
-	jz insere_no_inicio
-
-	movl %edi, %eax
-	addl $88, %eax
-	popl %edi #recupera ponteiro do novo elemento
-	movl %edi, (%eax)
-	movl ptprox, %eax
-	movl %eax, 88(%edi)
+	movl ptreg, %eax
+	movl ptpilha, %ebx
+	movl %ebx, 88(%eax)
+	movl %eax, ptpilha
 	jmp endinserte
 
-insere_no_inicio:
-	movl ptpilha, %eax
-	popl %edi #recupera ponteiro do novo elemento
-	movl %edi, ptpilha
-	movl %eax, 88(%edi)
+insereemordem_l1:
+	movl ptprox, %eax
+	movl %eax, ptant
+	movl 88(%eax), %ebx
+	movl %ebx, ptprox
+	cmpl $NULL, %ebx
+	jz insereemordem_end
+
+	pushl ptreg
+	pushl ptprox
+	call comparastring
+	addl $8, %esp
+	cmpl $2, %edi
+	jz insereemordem_l1
+
+insereemordem_end:
+	movl ptant, %eax
+	movl ptreg, %ebx
+	movl %ebx, 88(%eax)
+	movl ptprox, %eax
+	movl %eax, 88(%ebx)
 
 endinserte:
 	pushl $msginser
@@ -331,16 +324,70 @@ continua:
 	jmp menuop
 
 #FUNCAO PARA BUSCAR UM REGISTRO
-#retorna o ponteiro para o registro procurado em %edi
+#Parametro empilhado: string do registro a ser buscado
+#
+#Retorna o ponteiro para o registro procurado em %edi
 #e o ponteiro do registro anterior a ele em %esi
-#(caso o registro em %edi seja o primeiro, %esi sera NULL) 
+#(caso o registro em %edi seja o primeiro, %esi sera NULL)
+#(caso o registro nao seja encontrado, retorna NULL em %edi)
 buscarreg:
-	#TODO: implementar busca
+	popl %edi
+	movl %edi, endret	
+	movl ptpilha, %edi
+	pushl %edi
+	movl $NULL, %esi
+
+buscarreg_l1:
+	cmpl $NULL, %edi
+	jz buscarreg_ret
+	call comparastring
+	cmpl $0, %edi
+	jz buscarreg_ret
+
+	popl %esi
+	movl 88(%esi), %edi
+	pushl %edi
+	jmp buscarreg_l1
+
+buscarreg_ret:
+	popl %edi
+	pushl endret
+	ret
 
 #Essa funcao eh chamada pelo menu. Ela invoca buscarreg para
 #encontrar um registro e o mostra na tela, caso encontrar
 buscar:
 	#TODO: implementar interface de busca
+	pushl $titcon
+	call printf
+	addl $4, %esp
+
+	pushl $pedenome
+	call printf
+	addl $4, %esp
+
+	pushl $nome
+	call gets
+	call buscarreg
+	addl $4, %esp
+
+	cmpl $NULL, %edi
+	jz buscar_notfound
+
+	pushl $msgencontrado
+	call printf
+	addl $4, %esp
+	call mostra_dados
+	jmp buscar_fim
+
+buscar_notfound:
+	pushl $msgnencontrado
+	call printf
+	addl $4, %esp
+	jmp buscar_fim
+
+buscar_fim:
+	jmp menuop
 
 #Mostra todos os registros da lista
 mostratudo:
@@ -358,6 +405,7 @@ mostraelemento:
 listavazia:
 	pushl $msgvazia
 	call printf
+	addl $4, %esp
 	jmp menuop	
 
 menuop:
