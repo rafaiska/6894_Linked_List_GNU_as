@@ -75,6 +75,8 @@ le_dados:
 	addl $44, %edi
 	pushl %edi
 
+	#TODO: inverter ordem de leitura da data, para que
+	#na ordem certa para o printf
 	pushl $pededia
 	call printf
 	addl $4, %esp
@@ -244,7 +246,6 @@ inserir:
 	jmp endinserte
 
 insereemordem:
-	#TODO: implementar insercao em ordem aqui
 	movl %eax, ptprox
 	pushl ptreg
 	pushl ptprox
@@ -293,34 +294,49 @@ endinserte:
 #o ponteiro para a string contendo o nome do removido deve ser
 #passado pelo registrador %edi
 remover:
-	#TODO: implementar remocao
 	pushl $titrem
 	call printf
 	addl $4, %esp
 
-	movl ptpilha, %edi
-	cmpl $NULL, %edi
-	jnz continua
+	pushl $pedenome
+	call printf
+	addl $4, %esp
 
-	pushl $msgvazia
+	pushl $nome
+	call gets
+	call buscarreg
+	addl $4, %esp
+
+	cmpl $NULL, %edi
+	jnz remover_c
+
+	pushl $msgnencontrado
 	call printf
 	addl $4, %esp
 
 	jmp menuop
 
-continua:
-	movl ptpilha, %edi
+remover_c:
+	cmpl $NULL, %esi
+	jz remover_inicio
+
+	movl 88(%edi), %eax
+	movl %eax, 88(%esi)
+
+	jmp remover_fim
+
+remover_inicio:
+	movl 88(%edi), %eax
+	movl %eax, ptpilha
+
+remover_fim:
 	pushl %edi
-	movl 80(%edi), %edi
-	movl %edi, ptpilha
+	call free
+	addl $4, %esp
 
 	pushl $msgremov
 	call printf
 	addl $4, %esp
-
-	call free
-	addl $4, %esp
-
 	jmp menuop
 
 #FUNCAO PARA BUSCAR UM REGISTRO
@@ -357,7 +373,6 @@ buscarreg_ret:
 #Essa funcao eh chamada pelo menu. Ela invoca buscarreg para
 #encontrar um registro e o mostra na tela, caso encontrar
 buscar:
-	#TODO: implementar interface de busca
 	pushl $titcon
 	call printf
 	addl $4, %esp
