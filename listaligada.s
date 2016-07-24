@@ -6,9 +6,11 @@ titrem: .asciz "\nREMOCAO:\n"
 titcon: .asciz "\nBUSCA POR REGISTRO\n"
 titmos: .asciz "\nMOSTRANDO TODOS OS REGISTROS:\n"
 titreg: .asciz "\Registro no %d:"
+titalt: .asciz "\nALTERACAO DE REGISTRO:\n"
 
-menu: .asciz "\nESCOLHA A OPCAO:\n1 - INSERIR REGISTRO\n2 - REMOVER REGISTRO\n3 - BUSCAR REGISTRO\n4 - LISTAR TODOS\n5 - SAIR\n> "
+menu: .asciz "\nESCOLHA A OPCAO:\n1 - INSERIR REGISTRO\n2 - REMOVER REGISTRO\n3 - BUSCAR REGISTRO\n4 - LISTAR TODOS\n5 - ALTERAR REGISTRO\n6 - SAIR\n> "
 
+msgalterar: .asciz "Registro encontrado! Entre com novos dados:\n"
 msgerro: .asciz "\nOPCAO INCORRETA!\n"
 msgvazia: .asciz "\nLISTA VAZIA!\n"
 msgremov: .asciz "\nREGISTRO REMOVIDO!\n"
@@ -27,14 +29,14 @@ mostranome: .asciz "\nNome: %s"
 mostranasc: .asciz "\nData de Nasc.: %2d/%2d/%2d"
 mostrasexo: .asciz "\nSexo: %c"
 mostraprof: .asciz "\nProfissao: %s"
-mostrasala: .asciz "\nSalario: %d\n"
+mostrasala: .asciz "\nSalario: %.2f\n"
 
 mostrapt: .asciz "\nptreg = %d\n"
 
 formastr: .asciz "%s"
 formach: .asciz "%c"
 formanum: .asciz "%d"
-formaflt: .asciz "%d"
+formaflt: .asciz "%f"
 
 pulalinha: .asciz "\n"
 
@@ -206,10 +208,14 @@ mostra_dados:
 	addl $24, %edi
 	pushl %edi
 
-	pushl (%edi)
+	movl (%edi), %esi
+	movl %esi, salario
+	flds salario
+	subl $8, %esp
+	fstpl (%esp)
 	pushl $mostrasala
 	call printf
-	addl $8, %esp
+	addl $12, %esp
 
 	#foram percorridos 84 bytes (92 - 4 do salario - 4 do ponteiro)
 	popl %edi
@@ -421,6 +427,112 @@ listavazia:
 	addl $4, %esp
 	jmp menuop	
 
+alterar:
+	pushl $titalt
+	call printf
+	addl $4, %esp
+
+	pushl $pedenome
+	call printf
+	addl $4, %esp
+
+	pushl $nome
+	call gets
+	call buscarreg
+	addl $4, %esp
+
+	cmpl $NULL, %edi
+	jnz alterar_c
+
+	pushl $msgnencontrado
+	call printf
+	addl $4, %esp
+	jmp menuop
+
+alterar_c:
+	pushl $msgalterar
+	call printf
+	addl $4, %esp
+
+	addl $44, %edi
+	pushl %edi
+
+	pushl $pedeano
+	call printf
+	addl $4, %esp
+	pushl $formanum
+	call scanf
+	addl $4, %esp
+
+	popl %edi
+	addl $4, %edi
+	pushl %edi
+
+	pushl $pedemes
+	call printf
+	addl $4, %esp
+	pushl $formanum
+	call scanf
+	addl $4, %esp
+
+	popl %edi
+	addl $4, %edi
+	pushl %edi
+
+	pushl $pededia
+	call printf
+	addl $4, %esp
+	pushl $formanum
+	call scanf
+	addl $4, %esp
+
+	popl %edi
+	addl $4, %edi
+	pushl %edi
+
+	#limpando buffer
+	pushl $formach
+	call scanf
+	addl $4, %esp
+
+	pushl $pedesexo
+	call printf
+	addl $4, %esp
+	pushl $formach
+	call scanf
+	addl $4, %esp
+
+	popl %edi
+	addl $4, %edi
+	pushl %edi
+
+	#limpando buffer
+	pushl $formach
+	call scanf
+	addl $4, %esp
+
+	pushl $pedeprofissao
+	call printf
+	addl $4, %esp
+	call gets
+
+	popl %edi
+	addl $24, %edi
+	pushl %edi
+
+	pushl $pedesalario
+	call printf
+	addl $4, %esp
+	pushl $formaflt
+	call scanf
+	addl $8, %esp
+
+	#limpando buffer
+	pushl $sexo
+	pushl $formach
+	call scanf
+	addl $8, %esp
+
 menuop:
 	pushl $menu
 	call printf
@@ -445,6 +557,8 @@ menuop:
 	cmpl $4, opcao
 	jz mostratudo
 	cmpl $5, opcao
+	jz alterar
+	cmpl $6, opcao
 	jz fim
 
 	pushl $msgerro
