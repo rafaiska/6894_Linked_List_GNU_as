@@ -8,7 +8,8 @@ titmos: .asciz "\nMOSTRANDO TODOS OS REGISTROS:\n"
 titreg: .asciz "\Registro no %d:"
 titalt: .asciz "\nALTERACAO DE REGISTRO:\n"
 
-menu: .asciz "\nESCOLHA A OPCAO:\n1 - INSERIR REGISTRO\n2 - REMOVER REGISTRO\n3 - BUSCAR REGISTRO\n4 - LISTAR TODOS\n5 - ALTERAR REGISTRO\n6 - SAIR\n> "
+menu: .asciz "\nESCOLHA A OPCAO:\n1 - INSERIR REGISTRO\n2 - REMOVER REGISTRO\n3 - BUSCAR REGISTRO\n4 - LISTAR TODOS\n5 - ALTERAR REGISTRO\n6 - ALTERAR METODO DE CATALOGACAO\n7 - SAIR\n> "
+menucatalogacao: .asciz "\nComo voce deseja catalogar os registros?\n1 - Por nome\n2 - Por idade\n> "
 
 msgalterar: .asciz "Registro encontrado! Entre com novos dados:\n"
 msgerro: .asciz "\nOPCAO INCORRETA!\n"
@@ -43,6 +44,10 @@ pulalinha: .asciz "\n"
 NULL: .int 0
 
 opcao: .int 0
+#Essa variavel controla o modo de classificacao dos registros
+#	0: Ordenados por nome
+#	1: Ordenados por data de nascimento
+opcao_sort: .int 0
 
 nome: .space 44
 dian: .int 0
@@ -64,6 +69,42 @@ endret: .int NULL
 .globl _start
 _start:
 	jmp main
+
+#FUNCAO QUE MUDA O METODO DE CATALOGACAO DOS REGISTROS
+mudar_catalogacao:
+	pushl $menucatalogacao
+	call printf
+	addl $4, %esp
+
+	pushl $opcao
+	pushl $formanum
+	call scanf
+	addl $8, %esp
+
+	#para limpar o buffer:
+	pushl $formach
+	call scanf
+	addl $4, %esp
+
+	cmpl $1, opcao
+	jz mudar_catalogacao_pornome
+
+	cmpl $2, opcao
+	jz mudar_catalogacao_pordata
+	
+	pushl $msgerro
+	call printf
+	addl $4, %esp
+
+	jmp menuop
+
+mudar_catalogacao_pornome:
+	movl $0, opcao_sort
+	jmp menuop
+
+mudar_catalogacao_pordata:
+	movl $1, opcao_sort
+	jmp menuop
 
 le_dados:
 	pushl %edi
@@ -253,7 +294,17 @@ insereemordem:
 	movl %eax, ptprox
 	pushl ptreg
 	pushl ptprox
+
+	cmpl $1, opcao_sort
+	jz insereemordem_bydata
+
 	call comparastring
+	jmp insereemordem_continua
+
+insereemordem_bydata:
+	call comparadata
+
+insereemordem_continua:
 	addl $8, %esp
 	cmpl $2, %edi 
 	jz insereemordem_l1
@@ -274,7 +325,17 @@ insereemordem_l1:
 
 	pushl ptreg
 	pushl ptprox
+
+	cmpl $1, opcao_sort
+	jz insereemordem_l1_bydata
+
 	call comparastring
+	jmp insereemordem_l1_continua
+
+insereemordem_l1_bydata:
+	call comparadata
+
+insereemordem_l1_continua:
 	addl $8, %esp
 	cmpl $2, %edi
 	jz insereemordem_l1
@@ -559,6 +620,8 @@ menuop:
 	cmpl $5, opcao
 	jz alterar
 	cmpl $6, opcao
+	jz mudar_catalogacao
+	cmpl $7, opcao
 	jz fim
 
 	pushl $msgerro
