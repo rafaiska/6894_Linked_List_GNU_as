@@ -8,7 +8,7 @@ titmos: .asciz "\nMOSTRANDO TODOS OS REGISTROS:\n"
 titreg: .asciz "\Registro no %d:"
 titalt: .asciz "\nALTERACAO DE REGISTRO:\n"
 
-menu: .asciz "\nESCOLHA A OPCAO:\n1 - INSERIR REGISTRO\n2 - REMOVER REGISTRO\n3 - BUSCAR REGISTRO\n4 - LISTAR TODOS\n5 - ALTERAR REGISTRO\n6 - ALTERAR METODO DE CATALOGACAO\n7 - SAIR\n> "
+menu: .asciz "\nESCOLHA A OPCAO:\n1 - INSERIR REGISTRO\n2 - REMOVER REGISTRO\n3 - BUSCAR REGISTRO\n4 - LISTAR TODOS\n5 - ALTERAR REGISTRO\n6 - ALTERAR ORDENACAO\n7 - SAIR\n> "
 menucatalogacao: .asciz "\nComo voce deseja catalogar os registros?\n1 - Por nome\n2 - Por idade\n> "
 
 msgalterar: .asciz "Registro encontrado! Entre com novos dados:\n"
@@ -41,8 +41,6 @@ formaflt: .asciz "%f"
 
 pulalinha: .asciz "\n"
 
-NULL: .int 0
-
 opcao: .int 0
 #Essa variavel controla o modo de classificacao dos registros
 #	0: Ordenados por nome
@@ -56,14 +54,14 @@ anon: .int 0
 sexo: .space 4
 profissao: .space 24
 salario: .float 0
-prox: .int NULL
+prox: .int 0
 
 naloc: .int 92
-ptpilha: .int NULL
-ptreg: .int NULL
-ptprox: .int NULL
-ptant: .int NULL
-endret: .int NULL
+ptpilha: .int 0
+ptreg: .int 0
+ptprox: .int 0
+ptant: .int 0
+endret: .int 0
 
 .section .text
 .globl _start
@@ -100,10 +98,18 @@ mudar_catalogacao:
 
 mudar_catalogacao_pornome:
 	movl $0, opcao_sort
-	jmp menuop
+	jmp mudar_catalogacao_sort
 
 mudar_catalogacao_pordata:
 	movl $1, opcao_sort
+
+mudar_catalogacao_sort:
+	pushl opcao_sort
+	pushl ptpilha
+	call sortallreg
+	popl %eax
+	movl %eax, ptpilha
+	addl $4, %esp
 	jmp menuop
 
 le_dados:
@@ -197,7 +203,7 @@ le_dados:
 	call scanf
 	addl $8, %esp
 
-	movl $NULL, (%edi)
+	movl $0, (%edi)
 	subl $88, %edi
 
 	RET
@@ -283,7 +289,7 @@ inserir:
 	call le_dados
 
 	movl ptpilha, %eax
-	cmpl $NULL, %eax
+	cmpl $0, %eax
 	jnz insereemordem
 
 	#a lista esta vazia, inserir primeiro
@@ -320,7 +326,7 @@ insereemordem_l1:
 	movl %eax, ptant
 	movl 88(%eax), %ebx
 	movl %ebx, ptprox
-	cmpl $NULL, %ebx
+	cmpl $0, %ebx
 	jz insereemordem_end
 
 	pushl ptreg
@@ -372,7 +378,7 @@ remover:
 	call buscarreg
 	addl $4, %esp
 
-	cmpl $NULL, %edi
+	cmpl $0, %edi
 	jnz remover_c
 
 	pushl $msgnencontrado
@@ -382,7 +388,7 @@ remover:
 	jmp menuop
 
 remover_c:
-	cmpl $NULL, %esi
+	cmpl $0, %esi
 	jz remover_inicio
 
 	movl 88(%edi), %eax
@@ -416,10 +422,10 @@ buscarreg:
 	movl %edi, endret	
 	movl ptpilha, %edi
 	pushl %edi
-	movl $NULL, %esi
+	movl $0, %esi
 
 buscarreg_l1:
-	cmpl $NULL, %edi
+	cmpl $0, %edi
 	jz buscarreg_ret
 	call comparastring
 	cmpl $0, %edi
@@ -451,7 +457,7 @@ buscar:
 	call buscarreg
 	addl $4, %esp
 
-	cmpl $NULL, %edi
+	cmpl $0, %edi
 	jz buscar_notfound
 
 	pushl $msgencontrado
@@ -472,13 +478,13 @@ buscar_fim:
 #Mostra todos os registros da lista
 mostratudo:
 	movl ptpilha, %edi
-	cmpl $NULL, %edi
+	cmpl $0, %edi
 	jz listavazia
 
 mostraelemento:
 	call mostra_dados
 	movl 88(%edi), %edi
-	cmpl $NULL, %edi
+	cmpl $0, %edi
 	jnz mostraelemento
 	jmp menuop
 	
@@ -502,7 +508,7 @@ alterar:
 	call buscarreg
 	addl $4, %esp
 
-	cmpl $NULL, %edi
+	cmpl $0, %edi
 	jnz alterar_c
 
 	pushl $msgnencontrado
