@@ -7,9 +7,11 @@ titcon: .asciz "\nBUSCA POR REGISTRO\n"
 titmos: .asciz "\nMOSTRANDO TODOS OS REGISTROS:\n"
 titreg: .asciz "\Registro no %d:"
 titalt: .asciz "\nALTERACAO DE REGISTRO:\n"
+titsal: .asciz "\nALTERACAO DE SALARIO:\n"
 
-menu: .asciz "\nESCOLHA A OPCAO:\n1 - INSERIR REGISTRO\n2 - REMOVER REGISTRO\n3 - BUSCAR REGISTRO\n4 - LISTAR TODOS\n5 - ALTERAR REGISTRO\n6 - ALTERAR ORDENACAO\n7 - SAIR\n> "
+menu: .asciz "\nESCOLHA A OPCAO:\n1 - INSERIR REGISTRO\n2 - REMOVER REGISTRO\n3 - BUSCAR REGISTRO\n4 - LISTAR TODOS\n5 - ALTERAR REGISTRO\n6 - ALTERAR ORDENACAO\n7 - ALTERAR SALARIO\n8 - SAIR\n> "
 menucatalogacao: .asciz "\nComo voce deseja catalogar os registros?\n1 - Por nome\n2 - Por idade\n> "
+menu_salario: .asciz "\nQual o tipo da alteracao salarial a se fazer:\n1 - Por Soma\n2 - Por subtracao\n3 - Incrementar por taxa\n4 - Decrementar por taxa\n5 - Multiplicar\n6 - Dividir\n7 - Cancelar\n> "
 
 msgalterar: .asciz "Registro encontrado! Entre com novos dados:\n"
 msgerro: .asciz "\nOPCAO INCORRETA!\n"
@@ -18,6 +20,7 @@ msgremov: .asciz "\nREGISTRO REMOVIDO!\n"
 msginser: .asciz "\nREGISTRO INSERIDO!\n"
 msgnencontrado: .asciz "\nREGISTRO NAO ENCONTRADO\n"
 msgencontrado: .asciz "\nREGISTRO ENCONTRADO:\n"
+msgsalarioalterado: .asciz "\nSALARIO ALTERADO!\n"
 pedenome: .asciz "\nDigite o nome: "
 pededia: .asciz "Digite o dia de nascimento: "
 pedemes: .asciz "Digite o mes de nascimento: "
@@ -25,6 +28,12 @@ pedeano: .asciz "Digite o ano de nascimento: "
 pedesexo: .asciz "Qual o sexo, <F>eminino ou <M>asculino?: "
 pedeprofissao: .asciz "Digite a profissao: "
 pedesalario: .asciz "Digite o salario: "
+pedesalariosoma: .asciz "Quanto voce quer somar? "
+pedesalariosub: .asciz "Quanto voce quer subtrair? "
+pedesalariotaxaum: .asciz "Qual a porcentagem de incremento? "
+pedesalariotaxdec: .asciz "Qual a porcentagem de decremento? "
+pedesalariomul: .asciz "Por quanto voce quer multiplicar? "
+pedesalariodiv: .asciz "Por quanto voce quer dividir? "
 
 mostranome: .asciz "\nNome: %s"
 mostranasc: .asciz "\nData de Nasc.: %2d/%2d/%2d"
@@ -55,6 +64,7 @@ sexo: .space 4
 profissao: .space 24
 salario: .float 0
 prox: .int 0
+variavel_i: .int 0
 
 naloc: .int 92
 ptpilha: .int 0
@@ -67,6 +77,224 @@ endret: .int 0
 .globl _start
 _start:
 	jmp main
+
+#FUNCAO QUE ALTERA O SALARIO
+alterar_salario:
+	pushl $titsal
+	call printf
+	addl $4, %esp
+
+	pushl $pedenome
+	call printf
+	addl $4, %esp
+
+	pushl $nome
+	call gets
+	call buscarreg
+	addl $4, %esp
+
+	cmpl $0, %edi
+	jnz alterar_salario_load
+
+	pushl $msgnencontrado
+	call printf
+	addl $4, %esp
+	jmp menuop
+
+alterar_salario_load:
+	finit
+	flds 84(%edi)
+
+alterar_salario_menu:
+	pushl $menu_salario
+	call printf
+
+	pushl $opcao
+	pushl $formanum
+	call scanf
+
+	addl $12, %esp
+
+	#para limpar o buffer:
+	pushl $formach
+	call scanf
+	addl $4, %esp
+
+	cmpl $1, opcao
+	jz alterar_salario_soma
+	cmpl $2, opcao
+	jz alterar_salario_sub
+	cmpl $3, opcao
+	jz alterar_salario_taxaum
+	cmpl $4, opcao
+	jz alterar_salario_taxdec
+	cmpl $5, opcao
+	jz alterar_salario_mul
+	cmpl $6, opcao
+	jz alterar_salario_div
+	cmpl $7, opcao
+	jz menuop
+
+	pushl $msgerro
+	call printf
+	addl $4, %esp
+
+	jmp alterar_salario_menu
+
+alterar_salario_soma:
+	pushl $pedesalariosoma
+	call printf
+	addl $4, %esp
+
+	pushl $salario
+	pushl $formaflt
+	call scanf
+	addl $4, %esp
+
+	#limpando buffer
+	pushl $sexo
+	pushl $formach
+	call scanf
+	addl $8, %esp
+
+	flds salario
+	fadd %st(1), %st(0)
+
+	jmp alterar_salario_store
+
+alterar_salario_sub:
+	pushl $pedesalariosub
+	call printf
+	addl $4, %esp
+
+	pushl $salario
+	pushl $formaflt
+	call scanf
+	addl $4, %esp
+
+	#limpando buffer
+	pushl $sexo
+	pushl $formach
+	call scanf
+	addl $8, %esp
+
+	flds salario
+	fst %st(2)
+	fstp %st(0)
+	fsub %st(1), %st(0)
+
+	jmp alterar_salario_store
+
+alterar_salario_taxaum:
+	pushl $pedesalariotaxaum
+	call printf
+	addl $4, %esp
+
+	pushl $salario
+	pushl $formaflt
+	call scanf
+	addl $4, %esp
+
+	#limpando buffer
+	pushl $sexo
+	pushl $formach
+	call scanf
+	addl $8, %esp
+
+	flds salario
+	movl $100, variavel_i
+	fild variavel_i
+	fadd %st(1), %st(0)
+	fstp %st(1)
+
+	fmul %st(1), %st(0)
+	fild variavel_i
+	fst %st(2)
+	fstp %st(0)
+	fdiv %st(1), %st(0)
+
+	jmp alterar_salario_store
+
+alterar_salario_taxdec:
+	pushl $pedesalariotaxdec
+	call printf
+	addl $4, %esp
+
+	pushl $salario
+	pushl $formaflt
+	call scanf
+	addl $4, %esp
+
+	#limpando buffer
+	pushl $sexo
+	pushl $formach
+	call scanf
+	addl $8, %esp
+
+	flds salario
+	movl $100, variavel_i
+	fild variavel_i
+	fsub %st(1), %st(0)
+	fstp %st(1)
+
+	fmul %st(1), %st(0)
+	fild variavel_i
+	fst %st(2)
+	fstp %st(0)
+	fdiv %st(1), %st(0)
+
+	jmp alterar_salario_store
+
+alterar_salario_mul:
+	pushl $pedesalariomul
+	call printf
+	addl $4, %esp
+
+	pushl $salario
+	pushl $formaflt
+	call scanf
+	addl $4, %esp
+
+	#limpando buffer
+	pushl $sexo
+	pushl $formach
+	call scanf
+	addl $8, %esp
+
+	flds salario
+	fmul %st(1), %st(0)
+
+	jmp alterar_salario_store
+
+alterar_salario_div:
+	pushl $pedesalariodiv
+	call printf
+	addl $4, %esp
+
+	pushl $salario
+	pushl $formaflt
+	call scanf
+	addl $4, %esp
+
+	#limpando buffer
+	pushl $sexo
+	pushl $formach
+	call scanf
+	addl $8, %esp
+
+	flds salario
+	fst %st(2)
+	fstp %st(0)
+	fdiv %st(1), %st(0)
+
+alterar_salario_store:
+	fsts 84(%edi)
+
+	pushl $msgsalarioalterado
+	call printf
+	addl $4, %esp
+
+	jmp menuop
 
 #FUNCAO QUE MUDA O METODO DE CATALOGACAO DOS REGISTROS
 mudar_catalogacao:
@@ -628,6 +856,8 @@ menuop:
 	cmpl $6, opcao
 	jz mudar_catalogacao
 	cmpl $7, opcao
+	jz alterar_salario
+	cmpl $8, opcao
 	jz fim
 
 	pushl $msgerro
