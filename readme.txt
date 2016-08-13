@@ -4,16 +4,24 @@
  * ============== DEPARTAMENTO DE INFORMATICA ================ *
  * 6894 - PROGRAMACAO PARA INTERFACEAMENTO HARDWARE E SOFTWARE *
  * =========== PROFESSOR RONALDO A. L. GONCALVES ============= *
- * ====================== TRABALHO 1 ========================= *
+ * ====================== TRABALHO 2 ========================= *
  * Alunos:	Chen Po Hsiang		RA 83473	       *
  * 		Rafael Cortez Sanchez	RA 82357	       *
  ***************************************************************
 
+LISTA LIGADA EM IA-32 GNU ASSEMBLY
+Esse trabalho implementa uma lista ligada de registros, os
+quais contem informacoes sobre funcionarios. Uma descricao
+mais detalhada sobre o trabalho esta em "relatorio.pdf",
+contido no diretorio raiz do projeto, juntamente com esse
+arquivo de texto.
+
 INSTRUCOES PARA A COMPILACAO (LINUX):
 
-No diretorio raiz do projeto, basta entrar com o comando
-"make". O executavel sera criado e colocado no diretorio
-"./bin".
+Foi disponibilizado um Makefile no diretorio raiz desse
+projeto. Com o terminal aberto nesse diretorio, basta entrar
+com o comando "make". Caso a compilacao ocorra sem problemas,
+o executavel sera criado e colocado no diretorio "./bin".
 
 
 INSTRUCOES PARA A EXECUCAO (LINUX):
